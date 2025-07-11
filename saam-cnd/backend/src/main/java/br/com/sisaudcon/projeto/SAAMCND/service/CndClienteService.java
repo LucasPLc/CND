@@ -53,6 +53,7 @@ public class CndClienteService {
 
 
         CndCliente novoCliente = new CndCliente();
+        novoCliente.setNome(requestDTO.getNome()); // Adicionado
         novoCliente.setCnpj(requestDTO.getCnpj());
         novoCliente.setPeriodicidade(requestDTO.getPeriodicidade());
         novoCliente.setStatusCliente(requestDTO.getStatusCliente());
@@ -110,6 +111,7 @@ public class CndClienteService {
             clienteExistente.setEmpresa(novaEmpresa);
         }
 
+        clienteExistente.setNome(requestDTO.getNome()); // Adicionado
         clienteExistente.setCnpj(requestDTO.getCnpj());
         clienteExistente.setPeriodicidade(requestDTO.getPeriodicidade());
         clienteExistente.setStatusCliente(requestDTO.getStatusCliente());

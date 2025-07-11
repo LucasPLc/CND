@@ -28,6 +28,11 @@ public class CndCliente {
     @Column(nullable = false, length = 18) // Não pode ser unique globalmente se diferentes empresas podem ter clientes com mesmo CNPJ (improvável, mas considerar)
     private String cnpj;
 
+    @NotBlank(message = "Nome do cliente é obrigatório")
+    @Size(max = 255, message = "Nome do cliente deve ter no máximo 255 caracteres")
+    @Column(nullable = false)
+    private String nome;
+
     @NotNull(message = "Periodicidade é obrigatória")
     @Positive(message = "Periodicidade deve ser um valor positivo")
     @Column(nullable = false)

@@ -46,6 +46,8 @@ public class CndFederalService {
         CndResultado resultado = new CndResultado();
         resultado.setCliente(cliente);
         resultado.setDataProcessamento(LocalDateTime.now());
+        resultado.setTipoCertidao("Federal"); // Definindo tipo e órgão
+        resultado.setOrgaoEmissor("Receita Federal do Brasil");
 
         // Simular diferentes cenários de resposta
         double random = Math.random();
@@ -54,8 +56,9 @@ public class CndFederalService {
             resultado.setDataEmissao(LocalDate.now().minusDays((long) (Math.random() * 30))); // Emissão nos últimos 30 dias
             resultado.setDataValidade(resultado.getDataEmissao().plusDays(180)); // Validade de 180 dias
             resultado.setCodigoControle("MOCKRFB" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-            String mockPdfContentNegativa = "Este é um PDF mockado para CND Federal Negativa do CNPJ: " + cliente.getCnpj();
-            resultado.setArquivo(mockPdfContentNegativa.getBytes()); // Agora espera byte[]
+            // Usando Base64 para simular um PDF binário real, como esperado pelo CndResultadoDTO e download.
+            String mockPdfContentNegativa = Base64.getEncoder().encodeToString(("Este é um PDF mockado para CND Federal Negativa do CNPJ: " + cliente.getCnpj()).getBytes());
+            resultado.setArquivo(Base64.getDecoder().decode(mockPdfContentNegativa)); // Decodifica para byte[]
             resultado.setStatusProcessamento("CONSULTA_REALIZADA"); // Status para ser pego pela PEC-4963
             resultado.setLinha("GERADO-PEC-4869-MOCK-NEGATIVA");
             logger.info("CND Federal Mock: Negativa para CNPJ {}", cliente.getCnpj());
@@ -65,8 +68,8 @@ public class CndFederalService {
             resultado.setDataEmissao(LocalDate.now().minusDays((long) (Math.random() * 15)));
             resultado.setDataValidade(resultado.getDataEmissao().plusDays(90));
             resultado.setCodigoControle("MOCKRFB-PEN" + UUID.randomUUID().toString().substring(0, 6).toUpperCase());
-            String mockPdfContentPositivaEfeitosNeg = "Este é um PDF mockado para CND Federal Positiva com Efeitos de Negativa do CNPJ: " + cliente.getCnpj();
-            resultado.setArquivo(mockPdfContentPositivaEfeitosNeg.getBytes()); // Agora espera byte[]
+            String mockPdfContentPositivaEfeitosNeg = Base64.getEncoder().encodeToString(("Este é um PDF mockado para CND Federal Positiva com Efeitos de Negativa do CNPJ: " + cliente.getCnpj()).getBytes());
+            resultado.setArquivo(Base64.getDecoder().decode(mockPdfContentPositivaEfeitosNeg)); // Decodifica para byte[]
             resultado.setStatusProcessamento("CONSULTA_REALIZADA");
             resultado.setLinha("GERADO-PEC-4869-MOCK-POSITIVA_EFEITOS_NEG");
             logger.info("CND Federal Mock: Positiva com Efeitos de Negativa para CNPJ {}", cliente.getCnpj());

@@ -1,13 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import './index.css'; // Pode ser simplificado ou removido se o MUI cobrir tudo
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './theme'; // Importando o tema
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider theme={theme}>
+      <CssBaseline /> {/* Adiciona normalização de CSS e aplica cores de fundo do tema */}
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );
 

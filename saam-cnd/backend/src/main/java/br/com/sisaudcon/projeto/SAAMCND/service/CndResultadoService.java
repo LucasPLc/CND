@@ -206,15 +206,49 @@ public class CndResultadoService {
 
     public String gerarNomeArquivoPadronizado(CndResultado resultado) {
         // Formato: CND_CNPJ_ORGAO_DATAEMISSAO.pdf
-        // ORGAO (Federal(RFB), Municipal (MUN), Estadual(EST)) - Precisamos de uma forma de determinar o órgão.
-        // Por enquanto, usaremos um placeholder ou um campo na CndResultado se existir.
-        // Para simplificar, vamos usar "GERAL" como órgão se não houver informação.
-        String orgao = "GERAL"; // Placeholder
-        String cnpj = resultado.getCliente().getCnpj().replaceAll("[^0-9]", "");
-        String dataEmissao = resultado.getDataEmissao() != null ? resultado.getDataEmissao().toString() : "SEM_DATA";
+        // ORGAO (Federal(RFB), Municipal (MUN), Estadual(EST))
+        String cnpj = "CNPJ_NAO_DISPONIVEL";
+        if (resultado.getCliente() != null && resultado.getCliente().getCnpj() != null) {
+            cnpj = resultado.getCliente().getCnpj().replaceAll("[^0-9]", "");
+        }
+
+        String siglaOrgao;
+        String tipoCertidao = resultado.getTipoCertidao();
+
+        if (tipoCertidao != null) {
+            switch (tipoCertidao.toLowerCase()) {
+                case "federal":
+                    siglaOrgao = "RFB";
+                    break;
+                case "estadual":
+                    siglaOrgao = "EST"; // Pode ser mais específico se o estado estiver no orgaoEmissor
+                    break;
+                case "municipal":
+                    siglaOrgao = "MUN"; // Pode ser mais específico se o município estiver no orgaoEmissor
+                    break;
+                default:
+                    // Tenta extrair do orgaoEmissor se tipoCertidao não for padrão
+                    if (resultado.getOrgaoEmissor() != null && !resultado.getOrgaoEmissor().isEmpty()) {
+                        siglaOrgao = resultado.getOrgaoEmissor().replaceAll("[^a-zA-Z0-9]", "").substring(0, Math.min(resultado.getOrgaoEmissor().length(), 10));
+                    } else {
+                        siglaOrgao = "OUTRO";
+                    }
+                    break;
+            }
+        } else if (resultado.getOrgaoEmissor() != null && !resultado.getOrgaoEmissor().isEmpty()) {
+             // Se tipoCertidao for nulo, tenta usar orgaoEmissor
+            siglaOrgao = resultado.getOrgaoEmissor().replaceAll("[^a-zA-Z0-9]", "").substring(0, Math.min(resultado.getOrgaoEmissor().length(), 10));
+        } else {
+            siglaOrgao = "IND"; // Indefinido
+        }
+
+        String dataEmissaoStr = "SEM_DATA";
+        if (resultado.getDataEmissao() != null) {
+            dataEmissaoStr = resultado.getDataEmissao().toString(); // Formato YYYY-MM-DD
+        }
 
         // Ex: CND_12345678000199_RFB_2025-06-24.pdf
-        return String.format("CND_%s_%s_%s.pdf", cnpj, orgao, dataEmissao);
+        return String.format("CND_%s_%s_%s.pdf", cnpj, siglaOrgao.toUpperCase(), dataEmissaoStr);
     }
 
 

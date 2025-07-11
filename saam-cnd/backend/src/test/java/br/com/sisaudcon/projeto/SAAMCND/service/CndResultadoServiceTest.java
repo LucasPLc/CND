@@ -232,23 +232,71 @@ class CndResultadoServiceTest {
 
 
     @Test
-    void gerarNomeArquivoPadronizado_retornaNomeCorreto() {
+    void gerarNomeArquivoPadronizado_comTipoFederal_retornaNomeCorreto() {
+        resultado.setTipoCertidao("Federal");
         String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
         String cnpjEsperado = cliente.getCnpj().replaceAll("[^0-9]", "");
         String dataEmissaoEsperada = resultado.getDataEmissao().toString();
-        assertTrue(nomeArquivo.startsWith("CND_" + cnpjEsperado + "_GERAL_" + dataEmissaoEsperada));
-        assertTrue(nomeArquivo.endsWith(".pdf"));
+        assertEquals(String.format("CND_%s_RFB_%s.pdf", cnpjEsperado, dataEmissaoEsperada), nomeArquivo);
     }
+
+    @Test
+    void gerarNomeArquivoPadronizado_comTipoEstadual_retornaNomeCorreto() {
+        resultado.setTipoCertidao("Estadual");
+        String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
+        String cnpjEsperado = cliente.getCnpj().replaceAll("[^0-9]", "");
+        String dataEmissaoEsperada = resultado.getDataEmissao().toString();
+        assertEquals(String.format("CND_%s_EST_%s.pdf", cnpjEsperado, dataEmissaoEsperada), nomeArquivo);
+    }
+
+    @Test
+    void gerarNomeArquivoPadronizado_comTipoMunicipal_retornaNomeCorreto() {
+        resultado.setTipoCertidao("Municipal");
+        String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
+        String cnpjEsperado = cliente.getCnpj().replaceAll("[^0-9]", "");
+        String dataEmissaoEsperada = resultado.getDataEmissao().toString();
+        assertEquals(String.format("CND_%s_MUN_%s.pdf", cnpjEsperado, dataEmissaoEsperada), nomeArquivo);
+    }
+
+    @Test
+    void gerarNomeArquivoPadronizado_comTipoDesconhecidoComOrgaoEmissor_retornaNomeComOrgaoEmissor() {
+        resultado.setTipoCertidao("OutroTipo");
+        resultado.setOrgaoEmissor("SEFAZ-RJ");
+        String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
+        String cnpjEsperado = cliente.getCnpj().replaceAll("[^0-9]", "");
+        String dataEmissaoEsperada = resultado.getDataEmissao().toString();
+        assertEquals(String.format("CND_%s_SEFAZ-RJ_%s.pdf", cnpjEsperado, dataEmissaoEsperada), nomeArquivo); // Ajustado para remover não alfanuméricos
+    }
+
+    @Test
+    void gerarNomeArquivoPadronizado_comTipoNuloComOrgaoEmissor_retornaNomeComOrgaoEmissor() {
+        resultado.setTipoCertidao(null);
+        resultado.setOrgaoEmissor("DETRAN-SP");
+        String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
+        String cnpjEsperado = cliente.getCnpj().replaceAll("[^0-9]", "");
+        String dataEmissaoEsperada = resultado.getDataEmissao().toString();
+        assertEquals(String.format("CND_%s_DETRAN-SP_%s.pdf", cnpjEsperado, dataEmissaoEsperada), nomeArquivo); // Ajustado
+    }
+
 
     @Test
     void gerarNomeArquivoPadronizado_comDataEmissaoNula_retornaNomeComSemData() {
         resultado.setDataEmissao(null);
+        resultado.setTipoCertidao("Federal");
         String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
         String cnpjEsperado = cliente.getCnpj().replaceAll("[^0-9]", "");
-        assertTrue(nomeArquivo.startsWith("CND_" + cnpjEsperado + "_GERAL_SEM_DATA"));
-        assertTrue(nomeArquivo.endsWith(".pdf"));
+        assertEquals(String.format("CND_%s_RFB_SEM_DATA.pdf", cnpjEsperado), nomeArquivo);
     }
 
+    @Test
+    void gerarNomeArquivoPadronizado_comCnpjNuloNoCliente_retornaNomeComCnpjNaoDisponivel() {
+        cliente.setCnpj(null);
+        resultado.setCliente(cliente);
+        resultado.setTipoCertidao("Federal");
+        String nomeArquivo = cndResultadoService.gerarNomeArquivoPadronizado(resultado);
+        String dataEmissaoEsperada = resultado.getDataEmissao().toString();
+        assertEquals(String.format("CND_CNPJ_NAO_DISPONIVEL_RFB_%s.pdf", dataEmissaoEsperada), nomeArquivo);
+    }
 
     @Test
     void findResultadosParaExtracao_chamaRepositorioCorretamente() {

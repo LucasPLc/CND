@@ -18,6 +18,10 @@ public class CndClienteRequestDTO {
     @Size(min = 14, max = 18, message = "CNPJ deve ter entre 14 e 18 caracteres")
     private String cnpj;
 
+    @NotBlank(message = "Nome do cliente é obrigatório")
+    @Size(max = 255, message = "Nome do cliente deve ter no máximo 255 caracteres")
+    private String nome;
+
     @NotNull(message = "Periodicidade é obrigatória")
     @Positive(message = "Periodicidade deve ser um valor inteiro positivo")
     private Integer periodicidade;

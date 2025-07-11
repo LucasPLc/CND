@@ -36,16 +36,16 @@ public class SincronizacaoMgService {
         CndResultado resultado = new CndResultado();
         resultado.setCliente(cliente);
         resultado.setDataProcessamento(LocalDateTime.now());
-        resultado.setOrgaoEmissor("SEFAZ-MG (Mock)"); // Campo adicionado ao CndResultado e CndForm
-        resultado.setTipoCertidao("Estadual (Mock MG)"); // Campo adicionado
+        resultado.setOrgaoEmissor("SEFAZ-MG");
+        resultado.setTipoCertidao("Estadual");
 
         // Simular resposta
         resultado.setSituacao("Regular Fiscalmente (Mock MG)");
         resultado.setDataEmissao(LocalDate.now().minusDays((long) (Math.random() * 5)));
         resultado.setDataValidade(resultado.getDataEmissao().plusDays(60));
         resultado.setCodigoControle("MOCKMG" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
-        String mockPdfContent = "PDF Mockado - CND Estadual Minas Gerais - CNPJ: " + cliente.getCnpj();
-        resultado.setArquivo(mockPdfContent.getBytes()); // Agora espera byte[]
+        String mockPdfBase64 = Base64.getEncoder().encodeToString(("PDF Mockado - CND Estadual Minas Gerais - CNPJ: " + cliente.getCnpj()).getBytes());
+        resultado.setArquivo(Base64.getDecoder().decode(mockPdfBase64)); // Decodifica para byte[]
         resultado.setStatusProcessamento("CONSULTA_REALIZADA"); // Para extração posterior se necessário
         resultado.setLinha("GERADO-PEC-4629-MOCK_MG");
 

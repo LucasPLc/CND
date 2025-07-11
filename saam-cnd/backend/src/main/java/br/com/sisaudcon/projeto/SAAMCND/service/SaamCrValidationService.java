@@ -15,8 +15,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder; // Adicionado
 
 import java.io.IOException;
+import java.net.URI; // Adicionado
 
 @Service
 public class SaamCrValidationService {
@@ -24,14 +26,17 @@ public class SaamCrValidationService {
     private static final Logger logger = LoggerFactory.getLogger(SaamCrValidationService.class);
 
     private final RestTemplate restTemplate;
-    private final String saamCrValidationUrl;
+    private final String saamCrValidationBaseUrl; // Renomeado para indicar que é a base
     private final ObjectMapper objectMapper;
+    private final boolean mockSaamCrValidation; // Para controle do mock
 
     public SaamCrValidationService(RestTemplateBuilder restTemplateBuilder,
-                                   @Value("${saam.cr.validation.url}") String saamCrValidationUrl) {
+                                   @Value("${saam.cr.validation.url}") String saamCrUrl,
+                                   @Value("${saam.cr.validation.mock:false}") boolean mockValidation) { // Novo valor para mock
         this.restTemplate = restTemplateBuilder.build();
-        this.saamCrValidationUrl = saamCrValidationUrl;
+        this.saamCrValidationBaseUrl = saamCrUrl; // URL base da propriedade
         this.objectMapper = new ObjectMapper();
+        this.mockSaamCrValidation = mockValidation;
     }
 
     /**
@@ -44,19 +49,37 @@ public class SaamCrValidationService {
      */
     public boolean isClienteAutorizado(String idCliente) {
         if (idCliente == null || idCliente.trim().isEmpty()) {
-            // A PEC-4923 menciona ClienteIdInvalidoException com 400 Bad Request.
-            // Isso pode ser lançado antes de chamar este serviço ou tratado aqui.
-            // Por ora, o filtro/interceptor que chama este método deve garantir um ID válido.
             logger.warn("ID do Cliente para validação SAAM-CR está vazio ou nulo.");
             throw new ServicoExternoException("IDCLIENTE inválido ou não informado para validação no SAAM-CR.");
         }
 
-        String finalUrl = saamCrValidationUrl.replace("{IDCLIENTE}", idCliente);
+        if (mockSaamCrValidation) {
+            logger.info("MOCK SAAM-CR: Validando cliente ID {}", idCliente);
+            if ("1".equals(idCliente)) { // Cliente "1" é autorizado no mock
+                logger.info("MOCK SAAM-CR: Cliente {} autorizado.", idCliente);
+                return true;
+            } else if ("2".equals(idCliente)) { // Cliente "2" não é autorizado no mock
+                logger.warn("MOCK SAAM-CR: Cliente {} NÃO autorizado (situação: MOCK_0).", idCliente);
+                throw new ClienteNaoAutorizadoException("Acesso negado. Cliente sem autorização ativa no SAAM-CR (Situação: MOCK_0)");
+            } else if ("3".equals(idCliente)) { // Cliente "3" simula erro de serviço no mock
+                 logger.error("MOCK SAAM-CR: Simulando erro de serviço para cliente {}", idCliente);
+                throw new ServicoExternoException("MOCK: Falha na comunicação com o serviço de validação SAAM-CR.");
+            } else { // Outros clientes mockados como autorizados por padrão
+                logger.info("MOCK SAAM-CR: Cliente {} autorizado (padrão).", idCliente);
+                return true;
+            }
+        }
 
-        logger.debug("Validando cliente ID {} no SAAM-CR: URL {}", idCliente, finalUrl);
+        // Construção correta da URL com UriComponentsBuilder
+        URI finalUri = UriComponentsBuilder.fromHttpUrl(saamCrValidationBaseUrl)
+                .queryParam("IDCLIENTE", idCliente) // Adiciona IDCLIENTE como query param
+                .build()
+                .toUri();
+
+        logger.debug("Validando cliente ID {} no SAAM-CR: URL {}", idCliente, finalUri.toString());
 
         try {
-            ResponseEntity<String> response = restTemplate.getForEntity(finalUrl, String.class);
+            ResponseEntity<String> response = restTemplate.getForEntity(finalUri, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 String responseBody = response.getBody();

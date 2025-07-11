@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class CndClienteResponseDTO {
 
     private Long id;
+    private String nome;
     private String cnpj;
     private Integer periodicidade;
     private String statusCliente;
@@ -27,6 +28,7 @@ public class CndClienteResponseDTO {
 
     public CndClienteResponseDTO(CndCliente cliente) {
         this.id = cliente.getId();
+        this.nome = cliente.getNome();
         this.cnpj = cliente.getCnpj();
         this.periodicidade = cliente.getPeriodicidade();
         this.statusCliente = cliente.getStatusCliente();

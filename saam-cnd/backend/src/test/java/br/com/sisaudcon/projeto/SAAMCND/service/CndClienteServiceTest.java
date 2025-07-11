@@ -49,6 +49,7 @@ class CndClienteServiceTest {
 
         clienteRequestDTO = new CndClienteRequestDTO(
                 "12.345.678/0001-99",
+                "Cliente Teste DTO", // Nome adicionado
                 30,
                 "ATIVO",
                 true,
@@ -59,6 +60,7 @@ class CndClienteServiceTest {
 
         cliente = new CndCliente();
         cliente.setId(1L);
+        cliente.setNome("Cliente Teste Entidade"); // Nome adicionado
         cliente.setCnpj("12.345.678/0001-99");
         cliente.setEmpresa(empresa);
         cliente.setPeriodicidade(30);
@@ -78,6 +80,7 @@ class CndClienteServiceTest {
 
         assertNotNull(resultado);
         assertEquals("12.345.678/0001-99", resultado.getCnpj());
+        assertEquals("Cliente Teste DTO", resultado.getNome()); // Verifica o nome
         assertEquals(1L, resultado.getFkEmpresa());
         assertEquals("Empresa Teste", resultado.getNomeEmpresa());
         assertEquals("INSERT-PEC-4924", resultado.getLinha());
@@ -138,7 +141,14 @@ class CndClienteServiceTest {
     @Test
     void atualizarCliente_comDadosValidos_retornaClienteAtualizado() {
         CndClienteRequestDTO dtoAtualizacao = new CndClienteRequestDTO(
-                "99.888.777/0001-66", 60, "INATIVO", false, true, false, 1L
+                "99.888.777/0001-66",
+                "Cliente Atualizado Teste", // Nome atualizado
+                60,
+                "INATIVO",
+                false,
+                true,
+                false,
+                1L
         );
         when(cndClienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
         when(cndClienteRepository.save(any(CndCliente.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -148,6 +158,7 @@ class CndClienteServiceTest {
 
         assertNotNull(resultado);
         assertEquals("99.888.777/0001-66", resultado.getCnpj());
+        assertEquals("Cliente Atualizado Teste", resultado.getNome()); // Verifica nome atualizado
         assertEquals(60, resultado.getPeriodicidade());
         assertEquals("INATIVO", resultado.getStatusCliente());
         assertEquals("UPDATE-PEC-4924", resultado.getLinha());
@@ -157,7 +168,14 @@ class CndClienteServiceTest {
     @Test
     void atualizarCliente_mudandoEmpresa_buscaNovaEmpresa() {
         CndClienteRequestDTO dtoAtualizacao = new CndClienteRequestDTO(
-                "12.345.678/0001-99", 30, "ATIVO", true, false, true, 2L // Novo fkEmpresa
+                "12.345.678/0001-99",
+                "Cliente Teste Entidade", // Mesmo nome
+                30,
+                "ATIVO",
+                true,
+                false,
+                true,
+                2L // Novo fkEmpresa
         );
         CndEmpresa novaEmpresa = new CndEmpresa();
         novaEmpresa.setId(2L);

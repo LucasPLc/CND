@@ -1,53 +1,47 @@
 import React, { useState, useEffect } from 'react';
+import {
+    TextField, Button, Grid, Select, MenuItem, InputLabel, FormControl, Box, Typography
+} from '@mui/material';
 
-// Este formulário será para CndResultado, mas os campos de cadastro da PEC-4536
-// parecem misturar CndCliente e CndResultado.
-// Vamos focar nos campos editáveis da CndResultado para PEC-4537 e
-// nos campos de cadastro manual de uma CND (que pode gerar uma CndResultado).
-
-const CndForm = ({ initialData = {}, onSubmit, clientes, isEditMode = false }) => {
+const CndForm = ({ initialData = {}, onSubmit, clientes = [], isEditMode = false }) => {
     const [formData, setFormData] = useState({
-        // Campos da CndResultado (editáveis conforme PEC-4537)
-        // A PEC-4537 foca em editar dados de uma CND já cadastrada (CndResultado)
-        // e menciona "Tipo de Certidão", "Situação Fiscal", etc.
-        // A PEC-4536 (criar tela principal) lista campos para "cadastro de uma nova CND"
-        // que parecem ser mais para configurar um CndCliente para consulta automática,
-        // ou para inserir manualmente um CndResultado.
-        // Vamos priorizar os campos de CndResultado que podem ser editados ou inseridos manualmente.
-
-        fkCliente: initialData.fkCliente || '', // ID do CndCliente ao qual este resultado pertence
-        situacao: initialData.situacao || '', // Ex: "Negativa", "Positiva com Efeitos de Negativa"
-        dataEmissao: initialData.dataEmissao || '', // YYYY-MM-DD
-        dataValidade: initialData.dataValidade || '', // YYYY-MM-DD
-        codigoControle: initialData.codigoControle || '',
-        arquivo: initialData.arquivo || '', // Base64 do PDF (para upload manual, se aplicável)
-        statusProcessamento: initialData.statusProcessamento || 'MANUAL', // Default para inserção manual
-        // Campos da PEC-4536 que parecem de CndCliente ou configuração de consulta:
-        // status (habilita/desabilita consulta) -> CndCliente.statusCliente?
-        // tipoCertidao (Municipal, Estadual, Federal) -> Pode ser um campo em CndResultado para categorizar
-        // municipio -> Se tipoCertidao for Municipal. Pode ser um campo em CndResultado.
-        // orgaoEmissor -> Pode ser um campo em CndResultado.
-        // nomeContribuinte -> CndCliente.nome (não temos esse campo, CNPJ é o identificador)
-        // cpfOuCnpjContribuinte -> CndCliente.cnpj
-        // atividadeEconomicaCNAE -> Poderia ser em CndCliente ou CndResultado
-        // observacoes -> Campo genérico, pode ser em CndResultado
-        tipoCertidao: initialData.tipoCertidao || 'Federal', // Novo campo para CndResultado
-        orgaoEmissor: initialData.orgaoEmissor || 'Receita Federal do Brasil', // Novo campo para CndResultado
-        observacoes: initialData.observacoes || '', // Novo campo para CndResultado
+        fkCliente: '',
+        situacao: '',
+        dataEmissao: '',
+        dataValidade: '',
+        codigoControle: '',
+        // arquivo: '', // Omitido por enquanto, upload de arquivo requer tratamento especial
+        statusProcessamento: 'MANUAL',
+        tipoCertidao: 'Federal',
+        orgaoEmissor: '',
+        observacoes: '',
+        ...initialData // Sobrescreve com initialData, se houver
     });
 
     useEffect(() => {
-        // Formatar datas para o input type="date" se vierem do backend
-        const formattedData = { ...initialData };
+        const formattedData = {
+            fkCliente: '',
+            situacao: '',
+            dataEmissao: '',
+            dataValidade: '',
+            codigoControle: '',
+            statusProcessamento: 'MANUAL',
+            tipoCertidao: 'Federal',
+            orgaoEmissor: '',
+            observacoes: '',
+            ...initialData };
+
         if (initialData.dataEmissao) {
             formattedData.dataEmissao = initialData.dataEmissao.split('T')[0];
         }
         if (initialData.dataValidade) {
             formattedData.dataValidade = initialData.dataValidade.split('T')[0];
         }
-        setFormData(prev => ({ ...prev, ...formattedData }));
-    }, [initialData]);
+        // Assegura que fkCliente seja uma string para o Select
+        formattedData.fkCliente = initialData.fkCliente ? String(initialData.fkCliente) : '';
 
+        setFormData(formattedData);
+    }, [initialData]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -57,146 +51,182 @@ const CndForm = ({ initialData = {}, onSubmit, clientes, isEditMode = false }) =
         }));
     };
 
+    // Adaptação para o Select do MUI que pode passar o evento ou diretamente o valor
+    const handleSelectChange = (event) => {
+        const { name, value } = event.target;
+         setFormData(prevData => ({
+            ...prevData,
+            [name]: value,
+        }));
+    };
+
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Remover campos que não devem ser enviados diretamente se forem apenas para UI
         const dataToSubmit = { ...formData };
-        // Se 'arquivo' for um input file, tratar diferentemente (ler como base64)
+        if (dataToSubmit.fkCliente) { // Garante que fkCliente seja número se preenchido
+            dataToSubmit.fkCliente = parseInt(dataToSubmit.fkCliente, 10);
+        } else {
+            delete dataToSubmit.fkCliente; // Remove se estiver vazio para não enviar como 0 ou NaN
+        }
         onSubmit(dataToSubmit);
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            {/* Campo para selecionar Cliente (fkCliente) */}
-            {!isEditMode && clientes && ( // Mostrar seletor de cliente apenas no modo de criação
-                <div>
-                    <label htmlFor="fkCliente">Cliente Associado:</label>
-                    <select
-                        id="fkCliente"
-                        name="fkCliente"
-                        value={formData.fkCliente}
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+            <Grid container spacing={2}>
+                {!isEditMode && (
+                    <Grid item xs={12}>
+                        <FormControl fullWidth required={!isEditMode}>
+                            <InputLabel id="fkCliente-label">Cliente Associado</InputLabel>
+                            <Select
+                                labelId="fkCliente-label"
+                                id="fkCliente"
+                                name="fkCliente"
+                                value={formData.fkCliente}
+                                label="Cliente Associado"
+                                onChange={handleSelectChange} // Usar handleSelectChange aqui
+                            >
+                                <MenuItem value="">
+                                    <em>Selecione um Cliente</em>
+                                </MenuItem>
+                                {clientes && clientes.map(cliente => (
+                                    <MenuItem key={cliente.id} value={String(cliente.id)}>
+                                        {cliente.nome || cliente.cnpj} (ID: {cliente.id})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                )}
+                {isEditMode && formData.fkCliente && (
+                    <Grid item xs={12}>
+                        <Typography variant="subtitle1">
+                            Editando CND para Cliente: {
+                                clientes.find(c => String(c.id) === String(formData.fkCliente))?.nome ||
+                                clientes.find(c => String(c.id) === String(formData.fkCliente))?.cnpj ||
+                                `ID ${formData.fkCliente}`
+                            }
+                        </Typography>
+                    </Grid>
+                )}
+
+                <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                        <InputLabel id="tipoCertidao-label">Tipo de Certidão</InputLabel>
+                        <Select
+                            labelId="tipoCertidao-label"
+                            id="tipoCertidao"
+                            name="tipoCertidao"
+                            value={formData.tipoCertidao}
+                            label="Tipo de Certidão"
+                            onChange={handleSelectChange}
+                        >
+                            <MenuItem value="Federal">Federal</MenuItem>
+                            <MenuItem value="Estadual">Estadual</MenuItem>
+                            <MenuItem value="Municipal">Municipal</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                    <TextField
+                        fullWidth
+                        id="orgaoEmissor"
+                        name="orgaoEmissor"
+                        label="Órgão Emissor"
+                        value={formData.orgaoEmissor}
                         onChange={handleChange}
-                        required={!isEditMode} // Obrigatório ao criar
-                    >
-                        <option value="">Selecione um Cliente</option>
-                        {clientes.map(cliente => (
-                            <option key={cliente.id} value={cliente.id}>
-                                {cliente.cnpj} (ID: {cliente.id})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            )}
-            {isEditMode && formData.fkCliente && <p>Editando CND para Cliente ID: {formData.fkCliente}</p>}
+                        placeholder="Ex: Receita Federal, SEFAZ-SP"
+                    />
+                </Grid>
 
+                <Grid item xs={12}>
+                    <TextField
+                        fullWidth
+                        id="situacao"
+                        name="situacao"
+                        label="Situação da Certidão"
+                        value={formData.situacao}
+                        onChange={handleChange}
+                        placeholder="Ex: Negativa, Positiva com Efeito de Negativa"
+                    />
+                </Grid>
 
-            <div>
-                <label htmlFor="tipoCertidao">Tipo de Certidão:</label>
-                <select id="tipoCertidao" name="tipoCertidao" value={formData.tipoCertidao} onChange={handleChange}>
-                    <option value="Federal">Federal</option>
-                    <option value="Estadual">Estadual</option>
-                    <option value="Municipal">Municipal</option>
-                </select>
-            </div>
+                <Grid item xs={12} sm={6}>
+                    <TextField
+                        fullWidth
+                        id="dataEmissao"
+                        name="dataEmissao"
+                        label="Data de Emissão"
+                        type="date"
+                        value={formData.dataEmissao}
+                        onChange={handleChange}
+                        InputLabelProps={{ shrink: true }}
+                    />
+                </Grid>
 
-            <div>
-                <label htmlFor="orgaoEmissor">Órgão Emissor:</label>
-                <input
-                    type="text"
-                    id="orgaoEmissor"
-                    name="orgaoEmissor"
-                    value={formData.orgaoEmissor}
-                    onChange={handleChange}
-                    placeholder="Ex: Receita Federal, SEFAZ-SP, Prefeitura de..."
-                />
-            </div>
+                <Grid item xs={12} sm={6}>
+                    <TextField
+                        fullWidth
+                        id="dataValidade"
+                        name="dataValidade"
+                        label="Data de Validade"
+                        type="date"
+                        value={formData.dataValidade}
+                        onChange={handleChange}
+                        InputLabelProps={{ shrink: true }}
+                    />
+                </Grid>
 
-            <div>
-                <label htmlFor="situacao">Situação da Certidão:</label>
-                <input
-                    type="text"
-                    id="situacao"
-                    name="situacao"
-                    value={formData.situacao}
-                    onChange={handleChange}
-                    placeholder="Ex: Negativa, Positiva com Efeito de Negativa"
-                />
-            </div>
-
-            <div>
-                <label htmlFor="dataEmissao">Data de Emissão:</label>
-                <input
-                    type="date"
-                    id="dataEmissao"
-                    name="dataEmissao"
-                    value={formData.dataEmissao}
-                    onChange={handleChange}
-                />
-            </div>
-
-            <div>
-                <label htmlFor="dataValidade">Data de Validade:</label>
-                <input
-                    type="date"
-                    id="dataValidade"
-                    name="dataValidade"
-                    value={formData.dataValidade}
-                    onChange={handleChange}
-                />
-            </div>
-
-            <div>
-                <label htmlFor="codigoControle">Código de Controle:</label>
-                <input
-                    type="text"
-                    id="codigoControle"
-                    name="codigoControle"
-                    value={formData.codigoControle}
-                    onChange={handleChange}
-                />
-            </div>
-
-            {isEditMode && (
-                 <div>
-                    <label htmlFor="statusProcessamento">Status do Processamento Interno:</label>
-                    <input
-                        type="text"
-                        id="statusProcessamento"
-                        name="statusProcessamento"
-                        value={formData.statusProcessamento}
+                <Grid item xs={12}>
+                    <TextField
+                        fullWidth
+                        id="codigoControle"
+                        name="codigoControle"
+                        label="Código de Controle"
+                        value={formData.codigoControle}
                         onChange={handleChange}
                     />
-                </div>
-            )}
+                </Grid>
 
-            <div>
-                <label htmlFor="observacoes">Observações:</label>
-                <textarea
-                    id="observacoes"
-                    name="observacoes"
-                    value={formData.observacoes}
-                    onChange={handleChange}
-                />
-            </div>
+                {isEditMode && ( // Mostrar statusProcessamento apenas em edição
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            id="statusProcessamento"
+                            name="statusProcessamento"
+                            label="Status do Processamento Interno"
+                            value={formData.statusProcessamento}
+                            onChange={handleChange}
+                            // disabled // Poderia ser desabilitado se for apenas informativo
+                        />
+                    </Grid>
+                )}
 
-            {/* Campo para upload de arquivo PDF (Base64) - Simples por enquanto */}
-            {/* <div>
-                <label htmlFor="arquivo">Arquivo PDF (Base64):</label>
-                <textarea
-                    id="arquivo"
-                    name="arquivo"
-                    value={formData.arquivo}
-                    onChange={handleChange}
-                    placeholder="Cole o conteúdo Base64 do PDF aqui (se aplicável)"
-                    rows="3"
-                />
-            </div> */}
+                <Grid item xs={12}>
+                    <TextField
+                        fullWidth
+                        id="observacoes"
+                        name="observacoes"
+                        label="Observações"
+                        value={formData.observacoes}
+                        onChange={handleChange}
+                        multiline
+                        rows={3}
+                    />
+                </Grid>
+            </Grid>
 
-
-            <button type="submit" className="button">
-                {isEditMode ? 'Salvar Alterações' : 'Cadastrar CND'}
-            </button>
-        </form>
+            <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+            >
+                {isEditMode ? 'Salvar Alterações na CND' : 'Cadastrar Nova CND'}
+            </Button>
+        </Box>
     );
 };
 
