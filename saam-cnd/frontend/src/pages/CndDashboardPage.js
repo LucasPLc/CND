@@ -201,19 +201,26 @@ const CndDashboardPage = () => {
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - resultados.length) : 0;
 
 
-    if (loading && resultados.length === 0) {
-        return (
-            <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <CircularProgress />
-            </Container>
-        );
-    }
+    // if (loading && resultados.length === 0) {
+    //     return (
+    //         <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+    //             <CircularProgress />
+    //         </Container>
+    //     );
+    // }
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
-                Monitoramento de Certidões Negativas de Débitos
+                Monitoramento de Certidões Negativas de Débitos (TESTE SIMPLIFICADO)
             </Typography>
+            <p>Se esta mensagem aparecer, o componente CndDashboardPage está renderizando o básico.</p>
+            <p>Loading: {loading.toString()}</p>
+            <p>Error: {error}</p>
+            <p>Success: {successMessage}</p>
+            <p>Resultados Count: {resultados.length}</p>
+            <p>Clientes Count (para form): {clientes.length}</p>
+
 
             {error && <Alert severity="error" onClose={clearMessages} sx={{ mb: 2 }}>{error}</Alert>}
             {successMessage && <Alert severity="success" onClose={clearMessages} sx={{ mb: 2 }}>{successMessage}</Alert>}
@@ -278,7 +285,6 @@ const CndDashboardPage = () => {
                                 size="small"
                             />
                         </Grid>
-                        {/* TODO: Adicionar DatePickers para filtros de data aqui */}
                         <Grid item xs={12} container justifyContent="flex-end">
                             <Button
                                 variant="contained"
@@ -292,7 +298,6 @@ const CndDashboardPage = () => {
                 </AccordionDetails>
             </Accordion>
 
-            {/* Accordion para Nova Consulta */}
             <Accordion sx={{ mb: 2 }}>
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -343,7 +348,6 @@ const CndDashboardPage = () => {
                                     <MenuItem value=""><em>Selecione</em></MenuItem>
                                     <MenuItem value="federal">Receita Federal (CND PJ)</MenuItem>
                                     <MenuItem value="sefaz-mg">SEFAZ-MG (CDT)</MenuItem>
-                                    {/* Adicionar outros tipos de consulta aqui */}
                                 </Select>
                             </FormControl>
                         </Grid>
