@@ -6,6 +6,7 @@ const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'X-ID-CLIENTE': '1', // Header obrigatório para todas as requisições
   },
 });
 
@@ -72,14 +73,12 @@ export const deleteCliente = async (id) => {
   }
 };
 
-
 // --- CNDResultado Service ---
-export const getCndResultados = async (filters = {}) => { // Já implementada
+export const deleteCndResultado = async (id) => {
   try {
-    const response = await apiClient.get('/cnd-resultados', { params: filters });
-    return response.data;
+    await apiClient.delete(`/cnd-resultados/${id}`);
   } catch (error) {
-    console.error('Erro ao buscar resultados CND:', error);
+    console.error(`Erro ao deletar resultado CND com ID ${id}:`, error);
     throw error;
   }
 };
@@ -94,9 +93,9 @@ export const getCndResultadoById = async (id) => {
   }
 };
 
-export const createCndResultado = async (cndResultadoData) => {
+export const createCndResultado = async (cndData) => {
   try {
-    const response = await apiClient.post('/cnd-resultados', cndResultadoData);
+    const response = await apiClient.post('/cnd-resultados', cndData);
     return response.data;
   } catch (error) {
     console.error('Erro ao criar resultado CND:', error);
@@ -104,9 +103,9 @@ export const createCndResultado = async (cndResultadoData) => {
   }
 };
 
-export const updateCndResultado = async (id, cndResultadoData) => {
+export const updateCndResultado = async (id, cndData) => {
   try {
-    const response = await apiClient.put(`/cnd-resultados/${id}`, cndResultadoData);
+    const response = await apiClient.put(`/cnd-resultados/${id}`, cndData);
     return response.data;
   } catch (error) {
     console.error(`Erro ao atualizar resultado CND com ID ${id}:`, error);
@@ -114,11 +113,14 @@ export const updateCndResultado = async (id, cndResultadoData) => {
   }
 };
 
-export const deleteCndResultado = async (id) => {
+
+// --- CNDResultado Service ---
+export const getCndResultados = async (filters = {}) => { // Já implementada
   try {
-    await apiClient.delete(`/cnd-resultados/${id}`);
+    const response = await apiClient.get('/cnd-resultados', { params: filters });
+    return response.data;
   } catch (error) {
-    console.error(`Erro ao deletar resultado CND com ID ${id}:`, error);
+    console.error('Erro ao buscar resultados CND:', error);
     throw error;
   }
 };

@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432" # Expor a porta do Postgres localmente para debug, se necessário
+      - "5432:5432"
     networks:
       - saam-cnd-network
 
@@ -23,18 +23,16 @@ services:
     depends_on:
       - database
     ports:
-      - "8080:8080" # Backend API
+      - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/saam_cnd_db
       - SPRING_DATASOURCE_USERNAME=saamuser
       - SPRING_DATASOURCE_PASSWORD=saampass
       - SAAM_CR_VALIDATION_URL=http://saamauditoria-2.com.br:8085/api/empresa/getAttributeById/GLSAAM?attribute=situacao
-      # Para testes, se você tiver um mock server rodando na sua máquina host:
-      # SAAM_CR_VALIDATION_URL=http://host.docker.internal:9090/mock/saam-cr/validate
     networks:
       - saam-cnd-network
-    volumes:
-      - ./backend:/app # Montar o código local para desenvolvimento (opcional, remover para build de produção puro)
+    # volumes:
+    #   - ./backend:/app  # REMOVIDO para não sobrescrever o app.jar no container
 
   saam-cnd-ui:
     build:
@@ -42,14 +40,14 @@ services:
       dockerfile: Dockerfile
     container_name: saam-cnd-ui-container
     ports:
-      - "3000:80" # Frontend UI (Nginx serve na porta 80 dentro do container)
+      - "3000:80"
     depends_on:
-      - saam-cnd-api # Não estritamente necessário para build, mas bom para ordem de inicialização
+      - saam-cnd-api
     networks:
       - saam-cnd-network
     volumes:
-      - ./frontend/src:/app/src # Montar o código local para desenvolvimento (opcional, remover para build de produção puro)
-      - ./frontend/public:/app/public # Montar o código local para desenvolvimento (opcional, remover para build de produção puro)
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
 
 volumes:
   postgres_data:

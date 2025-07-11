@@ -3,17 +3,11 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import './App.css';
 
 import HomePage from './pages/HomePage';
+import ClientePage from './pages/ClientePage';
 import CndDashboardPage from './pages/CndDashboardPage';
-
 import CndDetailPage from './pages/CndDetailPage';
-
-// Placeholders - serão substituídos por componentes reais
-const ClientePagePlaceholder = () => <h2>Gerenciamento de Clientes (Em Desenvolvimento)</h2>;
 import CndFormPage from './pages/CndFormPage';
 
-// const CndDashboardPagePlaceholder = () => <h2>Monitoramento de CNDs (Em Desenvolvimento)</h2>; // Substituído
-// const CndDetailPagePlaceholder = () => <h2>Detalhes da CND (Em Desenvolvimento)</h2>; // Substituído
-// const CndFormPagePlaceholder = () => <h2>Formulário de CND (Em Desenvolvimento)</h2>; // Substituído
 
 
 function App() {
@@ -38,8 +32,8 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
 
-            {/* Rotas de Cliente (PEC-4924 no backend, front-end básico por enquanto) */}
-            <Route path="/clientes" element={<ClientePagePlaceholder />} />
+            {/* Rotas de Cliente */}
+            <Route path="/clientes" element={<ClientePage />} />
             {/*
             <Route path="/clientes/novo" element={<ClienteFormPage />} />
             <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />

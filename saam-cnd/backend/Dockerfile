@@ -9,7 +9,6 @@ RUN mvn package -DskipTests
 # Stage 2: Create the runtime image
 FROM openjdk:11-jre-slim
 WORKDIR /app
-ARG JAR_FILE=target/*.jar
-COPY --from=build /app/${JAR_FILE} app.jar
+COPY --from=build /app/target/SAAMCND-api-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","app.jar"]

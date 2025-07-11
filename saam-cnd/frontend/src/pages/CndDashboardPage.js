@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getCndResultados, deleteCliente } from '../services/apiService'; // getCndResultados, deleteCndResultado (a ser criado)
-// Importar o serviço de exclusão de CNDResultado quando for criado: import { deleteCndResultado } from '../services/apiService';
+import { getCndResultados, deleteCndResultado, consultarCndFederalApi, sincronizarCndMgApi, downloadCndPdf } from '../services/apiService';
+
 
 const CndDashboardPage = () => {
     const [resultados, setResultados] = useState([]);
