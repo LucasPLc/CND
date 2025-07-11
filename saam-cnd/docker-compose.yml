@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:13-alpine
+    container_name: saam-cnd-db
+    environment:
+      POSTGRES_DB: saam_cnd_db
+      POSTGRES_USER: saamuser
+      POSTGRES_PASSWORD: saampass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - saam-cnd-network
+
+  saam-cnd-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saam-cnd-api-container
+    depends_on:
+      - database
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/saam_cnd_db
+      - SPRING_DATASOURCE_USERNAME=saamuser
+      - SPRING_DATASOURCE_PASSWORD=saampass
+      - SAAM_CR_VALIDATION_URL=http://saamauditoria-2.com.br:8085/api/empresa/getAttributeById/GLSAAM?attribute=situacao
+    networks:
+      - saam-cnd-network
+    # volumes:
+    #   - ./backend:/app  # REMOVIDO para não sobrescrever o app.jar no container
+
+  saam-cnd-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: saam-cnd-ui-container
+    ports:
+      - "3000:80"
+    depends_on:
+      - saam-cnd-api
+    networks:
+      - saam-cnd-network
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+
+volumes:
+  postgres_data:
+
+networks:
+  saam-cnd-network:
+    driver: bridge
