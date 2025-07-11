@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { getCndResultados, deleteCndResultado, consultarCndFederalApi, sincronizarCndMgApi, downloadCndPdf } from '../services/apiService';
+import { getCndResultados, deleteCndResultado, consultarCndFederalApi, sincronizarCndMgApi, downloadCndPdf, getClientes } from '../services/apiService'; // getClientes adicionado
 import {
     Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, CircularProgress, Alert, Dialog, DialogActions,
     DialogContent, DialogContentText, DialogTitle, TextField, Box, IconButton, Tooltip,
-    Grid, Accordion, AccordionSummary, AccordionDetails, TablePagination // Adicionado
+    Grid, Accordion, AccordionSummary, AccordionDetails, TablePagination,
+    Select, MenuItem, FormControl, InputLabel, Autocomplete // Adicionados para o novo formulário
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
@@ -34,6 +35,15 @@ const CndDashboardPage = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10); // Default para 10 linhas
 
+    // Estados para o novo formulário de consulta
+    const [clientes, setClientes] = useState([]);
+    const [selectedCliente, setSelectedCliente] = useState(null); // Para Autocomplete
+    const [cnpjAvulso, setCnpjAvulso] = useState(''); // Não usado ainda, mas para a ideia de CNPJ avulso
+    const [tipoNovaConsulta, setTipoNovaConsulta] = useState(''); // Ex: 'federal', 'sefaz-mg'
+    const [loadingClientes, setLoadingClientes] = useState(false);
+    const [loadingNovaConsulta, setLoadingNovaConsulta] = useState(false);
+
+
     const fetchResultados = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -54,7 +64,21 @@ const CndDashboardPage = () => {
 
     useEffect(() => {
         fetchResultados();
-    }, [fetchResultados]);
+        // Buscar clientes para o formulário de nova consulta
+        const fetchClientesParaForm = async () => {
+            setLoadingClientes(true);
+            try {
+                const data = await getClientes();
+                setClientes(data || []);
+            } catch (err) {
+                console.error("Erro ao buscar clientes para formulário:", err);
+                // Não definir setError global aqui para não interferir com erros da tabela principal
+            } finally {
+                setLoadingClientes(false);
+            }
+        };
+        fetchClientesParaForm();
+    }, [fetchResultados]); // fetchResultados é dependência para recarregar a tabela principal
 
     const clearMessages = () => {
         setError(null);
@@ -134,6 +158,32 @@ const CndDashboardPage = () => {
             setSuccessMessage(`Download do PDF ${nomeArquivoSugerido} iniciado.`);
         } catch (downloadError) {
             setError('Falha ao baixar PDF: ' + (downloadError.response?.data?.message || downloadError.message));
+        }
+    };
+
+    const handleNovaConsultaSubmit = async () => {
+        if (!selectedCliente || !tipoNovaConsulta) {
+            setError("Por favor, selecione um cliente e um tipo de consulta.");
+            return;
+        }
+        clearMessages();
+        setLoadingNovaConsulta(true);
+        try {
+            let novoResultado;
+            if (tipoNovaConsulta === 'federal') {
+                novoResultado = await consultarCndFederalApi(selectedCliente.id);
+                setSuccessMessage(`Consulta Federal para cliente ${selectedCliente.nome} (ID: ${selectedCliente.id}) disparada. Situação: ${novoResultado.situacao || 'N/A'}`);
+            } else if (tipoNovaConsulta === 'sefaz-mg') {
+                novoResultado = await sincronizarCndMgApi(selectedCliente.id);
+                setSuccessMessage(`Sincronização MG para cliente ${selectedCliente.nome} (ID: ${selectedCliente.id}) disparada. Situação: ${novoResultado.situacao || 'N/A'}`);
+            }
+            fetchResultados(); // Recarrega a lista de resultados
+            setSelectedCliente(null); // Limpa seleção
+            setTipoNovaConsulta(''); // Limpa seleção
+        } catch (err) {
+            setError(`Falha ao iniciar nova consulta (${tipoNovaConsulta}): ` + (err.response?.data?.message || err.message));
+        } finally {
+            setLoadingNovaConsulta(false);
         }
     };
 
@@ -241,6 +291,77 @@ const CndDashboardPage = () => {
                     </Grid>
                 </AccordionDetails>
             </Accordion>
+
+            {/* Accordion para Nova Consulta */}
+            <Accordion sx={{ mb: 2 }}>
+                <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="nova-consulta-panel-content"
+                    id="nova-consulta-panel-header"
+                >
+                    <Typography>Nova Consulta de CND</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6}>
+                            <Autocomplete
+                                options={clientes}
+                                getOptionLabel={(option) => `${option.nome} (${option.cnpj})` || ''}
+                                value={selectedCliente}
+                                onChange={(event, newValue) => {
+                                    setSelectedCliente(newValue);
+                                }}
+                                loading={loadingClientes}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Selecione um Cliente"
+                                        variant="outlined"
+                                        size="small"
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            endAdornment: (
+                                                <>
+                                                    {loadingClientes ? <CircularProgress color="inherit" size={20} /> : null}
+                                                    {params.InputProps.endAdornment}
+                                                </>
+                                            ),
+                                        }}
+                                    />
+                                )}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel id="tipo-nova-consulta-label">Tipo de Consulta</InputLabel>
+                                <Select
+                                    labelId="tipo-nova-consulta-label"
+                                    value={tipoNovaConsulta}
+                                    label="Tipo de Consulta"
+                                    onChange={(e) => setTipoNovaConsulta(e.target.value)}
+                                >
+                                    <MenuItem value=""><em>Selecione</em></MenuItem>
+                                    <MenuItem value="federal">Receita Federal (CND PJ)</MenuItem>
+                                    <MenuItem value="sefaz-mg">SEFAZ-MG (CDT)</MenuItem>
+                                    {/* Adicionar outros tipos de consulta aqui */}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={2} container justifyContent="flex-end">
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={handleNovaConsultaSubmit}
+                                disabled={!selectedCliente || !tipoNovaConsulta || loadingNovaConsulta}
+                                startIcon={loadingNovaConsulta ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                            >
+                                Consultar
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </AccordionDetails>
+            </Accordion>
+
 
             {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my:2 }}><CircularProgress /></Box>}
 

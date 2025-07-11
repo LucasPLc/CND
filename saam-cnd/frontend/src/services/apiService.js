@@ -27,10 +27,10 @@ const apiClient = axios.create({
 export const getClientes = async () => {
   try {
     const response = await apiClient.get('/clientes');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : []; // Garante um array
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
-    throw error;
+    throw error; // O componente que chama tratará o erro para exibição
   }
 };
 
